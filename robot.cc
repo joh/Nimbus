@@ -267,91 +267,43 @@ void loop() {
     // Check battery
     battery_check();
     
-    // Read sensors
-    sharp_front = analogReadMedian(SHARP_FRONT_PIN, SHARP_SAMPLES);
-    sharp_left = analogReadMedian(SHARP_LEFT_PIN, SHARP_SAMPLES);
-    sharp_right = analogReadMedian(SHARP_RIGHT_PIN, SHARP_SAMPLES);
+    // Stop
+    setColor(0, 0, 0);
+    setSpeed(0, 0);
+    delay(2000);
     
-    switch (state) {
-    case FOLLOW:
-        follow();
-        break;
-    case LOST:
-        lost();
-        break;
-    default:
-        search();
-        break;
-    }
+    // Turn right
+    setSpeed(100, -100);
+    delay(100);
+    setSpeed(0, 0);
+    delay(1000);
     
-    setSpeed(speed_l, speed_r);
+    // Turn left
+    setSpeed(-100, 100);
+    delay(200);
+    setSpeed(0, 0);
+    delay(1000);
     
-    /*
-    if (sharp_front > SHARP_THRESH) {
-        // Object detected in front
-        sharp_last = FRONT;
-        
-        speed = map(sharp_front, SHARP_THRESH, SHARP_MAX, 150, 500);
-        if (sharp_right > sharp_left) {
-            // turn left
-            setSpeed(SPEED_L - speed, SPEED_R);
-            //turn = 1;
-        } else {
-            // turn right
-            setSpeed(SPEED_L, SPEED_R - speed);
-            //turn = 1;
-        }
-        
-    } else if (sharp_left > SHARP_THRESH) {
-        // Object to the left
-        sharp_last = LEFT;
-        
-        speed = map(sharp_left, SHARP_THRESH, SHARP_MAX, 100, SPEED_L);
-        setSpeed(speed, SPEED_R);
-        
-    } else if (sharp_right > SHARP_THRESH) {
-        // Object to the right
-        sharp_last = RIGHT;
-        
-        speed = map(sharp_right, SHARP_THRESH, SHARP_MAX, 100, SPEED_R);
-        setSpeed(SPEED_L, speed);
-        
-    } else {
-        if (sharp_last == LEFT) {
-            // Look for object at left
-            setSpeed(SPEED_L, SPEED_R - 100);
-        } else if (sharp_last == RIGHT) {
-            setSpeed(SPEED_L - 100, SPEED_R);
-        } else {
-            // Full speed ahoy!
-            setSpeed(SPEED_L, SPEED_R);
-        }
-    }*/
+    // Turn right
+    setSpeed(100, -100);
+    delay(100);
+    setSpeed(0, 0);
+    delay(1000);
     
-    /*
-    if (sharp_ir > SHARP_THRESH) {
-        if (sharp_ir < SHARP_CLOSE) {
-            // turn left
-            speed = map(sharp_ir, SHARP_THRESH, SHARP_MAX, 150, 500);
-            setSpeed(SPEED_L - speed, SPEED_R);
-            turn = 1;
-        } else {
-            // back up
-            i = map(sharp_ir, SHARP_CLOSE, SHARP_MAX, 100, 500);
-            setSpeed(-SPEED_L, -SPEED_R);
-            delay(500 - i);
-        }
-        
-    } else if (turn) {
-        delay(200);
-        turn = 0;
-        
-    } else {
-        setSpeed(SPEED_L, SPEED_R);
-    }*/
+    // Back
+    setSpeed(-100, -100);
+    setColor(255, 0, 0);
+    delay(500);
+    setSpeed(0, 0);
+    setColor(0, 0, 0);
+    delay(1000);
     
-    debug();
-    
-    delay(10);
+    // Front
+    setSpeed(100, 100);
+    setColor(0, 255, 0);
+    delay(1000);
+    setSpeed(0, 0);
+    setColor(0, 0, 0);
+    delay(1000);
 }
 
