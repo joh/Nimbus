@@ -275,14 +275,26 @@ void loop() {
     if (sharp_front > SHARP_THRESH && sharp_front > sharp_left && sharp_front > sharp_right) {
         // Object detected
         setSpeed(0, 0);
+        sharp_last = FRONT;
         
     } else if (sharp_left > SHARP_THRESH && sharp_left > sharp_right) {
         // Turn left
         setSpeed(-70, 70);
+        sharp_last = LEFT;
         
-    } else {
+    } else if (sharp_right > SHARP_THRESH && sharp_right > sharp_left){
         // Turn right
         setSpeed(70, -70);
+        sharp_last = RIGHT;
+        
+    } else {
+        if (sharp_last == LEFT) {
+            // Turn left
+            setSpeed(-70, 70);
+        } else {
+            // Turn right
+            setSpeed(70, -70);
+        }
     }
     
     delay(10);
