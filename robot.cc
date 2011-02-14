@@ -23,6 +23,8 @@ Side sharp_last = NONE;
 // Robot state
 State state = SEARCH;
 
+// Timer keeping track of how long we've been in LOST state
+unsigned long lost_time;
 
 
 /**
@@ -50,6 +52,8 @@ void setColor(int r, int g, int b) {
  */
 void debug()
 {
+    unsigned long t;
+    
     switch(state) {
     case SEARCH:
         Serial.print("SEARCH");
@@ -65,6 +69,10 @@ void debug()
         break;
     case LOST:
         Serial.print("LOST");
+        t = millis();
+        Serial.print(" (");
+        Serial.print(t - lost_time);
+        Serial.print("ms)");
         break;
     case LOST_L:
         Serial.print("LOST_L");
@@ -208,6 +216,7 @@ void follow() {
         
     } else {
         state = LOST;
+        lost_time = millis();
     }
 }
 
@@ -216,8 +225,17 @@ void follow() {
  */
 void lost()
 {
+    unsigned long t;
+    
     if (sharp_front > SHARP_THRESH || sharp_left > SHARP_THRESH || sharp_right > SHARP_THRESH) {
         state = FOLLOW;
+        return;
+    }
+    
+    // Check for timeout
+    t = millis();
+    if (t - lost_time > LOST_TIMEOUT) {
+        state = SEARCH;
         return;
     }
     
@@ -285,70 +303,6 @@ void loop() {
     }
     
     setSpeed(speed_l, speed_r);
-    
-    /*
-    if (sharp_front > SHARP_THRESH) {
-        // Object detected in front
-        sharp_last = FRONT;
-        
-        speed = map(sharp_front, SHARP_THRESH, SHARP_MAX, 150, 500);
-        if (sharp_right > sharp_left) {
-            // turn left
-            setSpeed(SPEED_L - speed, SPEED_R);
-            //turn = 1;
-        } else {
-            // turn right
-            setSpeed(SPEED_L, SPEED_R - speed);
-            //turn = 1;
-        }
-        
-    } else if (sharp_left > SHARP_THRESH) {
-        // Object to the left
-        sharp_last = LEFT;
-        
-        speed = map(sharp_left, SHARP_THRESH, SHARP_MAX, 100, SPEED_L);
-        setSpeed(speed, SPEED_R);
-        
-    } else if (sharp_right > SHARP_THRESH) {
-        // Object to the right
-        sharp_last = RIGHT;
-        
-        speed = map(sharp_right, SHARP_THRESH, SHARP_MAX, 100, SPEED_R);
-        setSpeed(SPEED_L, speed);
-        
-    } else {
-        if (sharp_last == LEFT) {
-            // Look for object at left
-            setSpeed(SPEED_L, SPEED_R - 100);
-        } else if (sharp_last == RIGHT) {
-            setSpeed(SPEED_L - 100, SPEED_R);
-        } else {
-            // Full speed ahoy!
-            setSpeed(SPEED_L, SPEED_R);
-        }
-    }*/
-    
-    /*
-    if (sharp_ir > SHARP_THRESH) {
-        if (sharp_ir < SHARP_CLOSE) {
-            // turn left
-            speed = map(sharp_ir, SHARP_THRESH, SHARP_MAX, 150, 500);
-            setSpeed(SPEED_L - speed, SPEED_R);
-            turn = 1;
-        } else {
-            // back up
-            i = map(sharp_ir, SHARP_CLOSE, SHARP_MAX, 100, 500);
-            setSpeed(-SPEED_L, -SPEED_R);
-            delay(500 - i);
-        }
-        
-    } else if (turn) {
-        delay(200);
-        turn = 0;
-        
-    } else {
-        setSpeed(SPEED_L, SPEED_R);
-    }*/
     
     debug();
     

@@ -31,13 +31,8 @@
 #define LED_BLUE_PIN  9
 
 // Parameters
-//#define SPEED
-/*
-#define SEARCH      (1 << 0)
-#define FOLLOW      (1 << 1)
-#define FOLLOW_L    (FOLLOW | 0)
-#define FOLLOW_R    (FOLLOW | 1)
-*/
+#define LOST_TIMEOUT 5000   // milliseconds
+
 // Mode of operation
 typedef enum {
     SEARCH,
