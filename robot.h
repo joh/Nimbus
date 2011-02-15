@@ -1,6 +1,7 @@
 // Battery
 #define BAT_PIN 0
-#define BAT_LOW 660 // 3.2V per cell
+#define BAT_FULL 865    // 4.2V per cell
+#define BAT_LOW 660     // 3.2V per cell
 
 // Motors
 #define RIGHT_PWM 3

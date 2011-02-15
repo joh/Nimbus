@@ -96,8 +96,11 @@ void debug()
     Serial.print("\tR: ");
     Serial.print(speed_r);
     
-    Serial.print("\tBat:");
-    Serial.print(bat);
+    t = (100 * (bat - BAT_LOW)) / (BAT_FULL - BAT_LOW);
+    
+    Serial.print("\tBat: ");
+    Serial.print(t);
+    Serial.print("%");
     
     Serial.println();
 }
