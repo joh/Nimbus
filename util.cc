@@ -19,7 +19,7 @@ void sort(int *a, int n)
     }
 }
 
-int buf[BUFSIZE];
+static int buf[ABUFSIZE];
 
 /**
  * Read analog pin n (<= BUFSIZE) times and return the median value
@@ -28,8 +28,8 @@ int analogReadMedian(int pin, int n)
 {
     int i;
     
-    if (n > BUFSIZE)
-        n = BUFSIZE;
+    if (n > ABUFSIZE)
+        n = ABUFSIZE;
     
     for (i = 0; i < n; i++) {
         buf[i] = analogRead(pin);

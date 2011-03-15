@@ -33,6 +33,8 @@
 
 // Parameters
 #define LOST_TIMEOUT 5000   // milliseconds
+#define BUFSIZE 128
+#define CMD_MAX_ARGS 8
 
 // Mode of operation
 typedef enum {

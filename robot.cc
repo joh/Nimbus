@@ -1,3 +1,18 @@
+/**
+ * Nimbus robot - XBee controlled
+ * 
+ * Accepts input commands in the form:
+ *   
+ *   CMD\n
+ *   CMD ARG1 ARG2 ...\n
+ *
+ * Available commands:
+ * 
+ *   STOP
+ *   SPEED L R
+ *   COLOR R G B
+ */
+
 #include <WProgram.h>
 
 #include "util.h"
@@ -26,6 +41,10 @@ State state = SEARCH;
 // Timer keeping track of how long we've been in LOST state
 unsigned long lost_time;
 
+// Input buffer
+char buf[BUFSIZE];
+char c;
+unsigned int buf_pos = 0;
 
 /**
  * Set wheel speeds
@@ -125,142 +144,81 @@ void battery_check() {
     }
 }
 
-
 /**
- * Search mode
+ * Parse command
+ * 
+ * Accepts input commands in the form:
+ *   
+ *   CMD\n
+ *   CMD ARG1 ARG2 ...\n
+ *
+ * Available commands:
+ * 
+ *   STOP
+ *   SPEED L R
+ *   COLOR R G B
+ *   STATUS
  */
-void search() {
-    /*if (speed_l == 0 && speed_r == 0) {
-        speed_l = SPEED_L;
-        speed_r = SPEED_R;
-    }
-    
-    speed_l += random(-5, 6);
-    speed_r += random(-5, 6);
-    
-    speed_l = constrain(speed_l, -SPEED_L, SPEED_L);
-    speed_r = constrain(speed_r, -SPEED_R, SPEED_R);
-    
-    Serial.print(speed_l);
-    Serial.print(' ');
-    Serial.print(speed_r);
-    Serial.println();
-    
-    setSpeed(speed_l, speed_r);*/
-    
-    setColor(255, 255, 0);
-
-    // Look for any objects
-    if (sharp_front > SHARP_THRESH || sharp_left > SHARP_THRESH || sharp_right > SHARP_THRESH) {
-        state = FOLLOW;
-    } else {
-        // No objects found, continue search
-        speed_l = SPEED_L;
-        speed_r = SPEED_R;
-    }
-}
-
-/**
- * In the follow wall state
- */
-void follow() {
-
-    if (sharp_front > SHARP_THRESH) {
-        // Object detected in front
-        setColor(255, 255, 255);
-        
-        speed = map(sharp_front, SHARP_THRESH, SHARP_MAX, 150, 500);
-        
-        if (sharp_right > sharp_left) {
-            // turn left
-            speed_l = SPEED_L - speed;
-            speed_r = SPEED_R;
-        } else {
-            // turn right
-            speed_l = SPEED_L;
-            speed_r = SPEED_R - speed;
-        }
-        
-        sharp_last = FRONT;
-        
-    } else if (sharp_right > SHARP_THRESH || sharp_left > SHARP_THRESH) {
-        if (sharp_right > sharp_left) {
-            // Object detected to the right
-            setColor(0, 255, 0);
-            
-            if (sharp_right < SHARP_FOLLOW) {
-                // Turn towards object
-                speed_l = SPEED_L;
-                speed_r = map(sharp_right, SHARP_THRESH, SHARP_FOLLOW, 100, SPEED_R);
-            } else {
-                // Turn away from object
-                speed_l = map(sharp_right, SHARP_FOLLOW, SHARP_MAX, SPEED_L, 100);
-                speed_r = SPEED_R;
-            }
-            
-            sharp_last = RIGHT;
-            
-        } else {
-            // Object detected to the left
-            setColor(255, 0, 0);
-            
-            if (sharp_left < SHARP_FOLLOW) {
-                // Turn towards object
-                speed_l = map(sharp_left, SHARP_THRESH, SHARP_FOLLOW, 100, SPEED_L);
-                speed_r = SPEED_R;
-            } else {
-                // Turn away from object
-                speed_l = SPEED_L;
-                speed_r = map(sharp_left, SHARP_FOLLOW, SHARP_MAX, SPEED_R, 100);
-            }
-            
-            sharp_last = LEFT;
-        }
-        
-    } else {
-        state = LOST;
-        lost_time = millis();
-    }
-}
-
-/**
- * Object lost
- */
-void lost()
+void command_parse()
 {
-    unsigned long t;
+    char *cmd, *str, *args[CMD_MAX_ARGS];
+    unsigned int i, n_args = 0;
     
-    if (sharp_front > SHARP_THRESH || sharp_left > SHARP_THRESH || sharp_right > SHARP_THRESH) {
-        state = FOLLOW;
-        return;
+    //Serial.print("Got command string: ");
+    //Serial.println(buf);
+    
+    cmd = strtok(buf, " ");
+    //Serial.print("Command: ");
+    //Serial.println(cmd);
+    
+    for (i = 0; i < CMD_MAX_ARGS && NULL != (str = strtok(NULL, " ")); i++) {
+        args[i] = str;
     }
     
-    // Check for timeout
-    t = millis();
-    if (t - lost_time > LOST_TIMEOUT) {
-        state = SEARCH;
-        return;
+    n_args = i;
+    /*
+    Serial.print("Arguments: ");
+    Serial.println(n_args);
+    
+    for (i = 0; i < n_args; i++) {
+        Serial.print("  ");
+        Serial.println(args[i]);
     }
-    
-    if (sharp_last == RIGHT) {
-        // Last seen to the right => turn right
-        setColor(0, 255, 255);
+    */
+    if (strcasecmp(cmd, "SPEED") == 0) {
+        if (n_args < 2) {
+            Serial.println("Usage: SPEED L R");
+            return;
+        }
         
-        speed_l = SPEED_L;
-        speed_r = 60;
-        
-    } else if (sharp_last == LEFT) {
-        // Last seen to the left => turn left
-        setColor(255, 0, 255);
-        
-        speed_l = 60;
-        speed_r = SPEED_R;
-    
-    } else {
-        // Start searching...
-        state = SEARCH;
+        speed_l = atoi(args[0]);
+        speed_r = atoi(args[1]);
     }
 }
+
+/**
+ * Read command
+ */
+void command_read()
+{
+    if (Serial.available() > 0) {
+        // Read the incoming byte
+        buf[buf_pos] = Serial.read();
+        
+        if (buf[buf_pos] == '\n') {
+            // End of command
+            buf[buf_pos] = '\0';
+            buf_pos = 0;
+            
+            // Parse it
+            command_parse();
+            
+        } else {
+            buf_pos++;
+        }
+	}
+}
+
 
 void setup() {
     Serial.begin(9600);
@@ -286,28 +244,20 @@ void setup() {
 
 void loop() {
     // Check battery
-    battery_check();
+    //battery_check();
     
     // Read sensors
     sharp_front = analogReadMedian(SHARP_FRONT_PIN, SHARP_SAMPLES);
     sharp_left = analogReadMedian(SHARP_LEFT_PIN, SHARP_SAMPLES);
     sharp_right = analogReadMedian(SHARP_RIGHT_PIN, SHARP_SAMPLES);
     
-    switch (state) {
-    case FOLLOW:
-        follow();
-        break;
-    case LOST:
-        lost();
-        break;
-    default:
-        search();
-        break;
-    }
+    // Read incoming command
+    command_read();
     
+    // Set speed
     setSpeed(speed_l, speed_r);
     
-    debug();
+    //debug();
     
     delay(10);
 }
