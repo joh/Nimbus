@@ -29,6 +29,9 @@ int bat;
 // Current wheel speeds
 int speed_l, speed_r;
 
+// Current color
+int color_r, color_g, color_b;
+
 // Sensor readings
 int sharp_front, sharp_left, sharp_right;
 
@@ -67,61 +70,55 @@ void setColor(int r, int g, int b) {
 }
 
 /**
- * Serial debug info
+ * Serial info
+ *
+ * Output has the following form:
+ *
+ * SHARP_FRONT <int>; SHARP_LEFT <int>; SHARP_RIGHT <int>; BAT <int>; \
+ * SPEED <int> <int>; COLOR <uint> <uint> <uint>; \n
  */
-void debug()
+void state_send()
 {
     unsigned long t;
     
-    switch(state) {
-    case SEARCH:
-        Serial.print("SEARCH");
-        break;
-    case FOLLOW:
-        Serial.print("FOLLOW");
-        break;
-    case FOLLOW_L:
-        Serial.print("FOLLOW_L");
-        break;
-    case FOLLOW_R:
-        Serial.print("FOLLOW_R");
-        break;
-    case LOST:
-        Serial.print("LOST");
-        t = millis();
-        Serial.print(" (");
-        Serial.print(t - lost_time);
-        Serial.print("ms)");
-        break;
-    case LOST_L:
-        Serial.print("LOST_L");
-        break;
-    case LOST_R:
-        Serial.print("LOST_R");
-        break;
-    }
-    
-    Serial.print("\tSens:");
-    Serial.print("\tL: ");
-    Serial.print(sharp_left);
-    Serial.print("\tF: ");
+    // Sharp sensors
+    Serial.print("SHARP_FRONT ");
     Serial.print(sharp_front);
-    Serial.print("\tR: ");
+    Serial.print("; ");
+    
+    Serial.print("SHARP_LEFT ");
+    Serial.print(sharp_left);
+    Serial.print("; ");
+    
+    Serial.print("SHARP_RIGHT ");
     Serial.print(sharp_right);
+    Serial.print("; ");
     
-    Serial.print("\tSpeed:");
-    Serial.print("\tL: ");
-    Serial.print(speed_l);
-    Serial.print("\tR: ");
-    Serial.print(speed_r);
-    
+    // Battery
     t = (100 * (bat - BAT_LOW)) / (BAT_FULL - BAT_LOW);
     
-    Serial.print("\tBat: ");
+    Serial.print("BAT ");
     Serial.print(t);
-    Serial.print("%");
+    Serial.print("; ");
     
-    Serial.println();
+    // Speed
+    Serial.print("SPEED ");
+    Serial.print(speed_l);
+    Serial.print(" ");
+    Serial.print(speed_r);
+    Serial.print("; ");
+    
+    // Color
+    Serial.print("COLOR ");
+    Serial.print(color_r);
+    Serial.print(" ");
+    Serial.print(color_g);
+    Serial.print(" ");
+    Serial.print(color_b);
+    Serial.print("; ");
+    
+    // End of info
+    Serial.print("\n");
 }
 
 /**
@@ -186,7 +183,10 @@ void command_parse()
     }
     */
     if (strcasecmp(cmd, "STOP") == 0) {
-        setSpeed(0, 0);
+        speed_l = 0;
+        speed_r = 0;
+        
+        //setSpeed(speed_l, speed_r);
     }
     
     if (strcasecmp(cmd, "SPEED") == 0) {
@@ -195,7 +195,10 @@ void command_parse()
             return;
         }
         
-        setSpeed(atoi(args[0]), atoi(args[1]));
+        speed_l = atoi(args[0]);
+        speed_r = atoi(args[1]);
+        
+        //setSpeed(speed_l, speed_r);
     }
     
     if (strcasecmp(cmd, "COLOR") == 0) {
@@ -204,7 +207,11 @@ void command_parse()
             return;
         }
         
-        setColor(atoi(args[0]), atoi(args[1]), atoi(args[2]));
+        color_r = atoi(args[0]);
+        color_g = atoi(args[1]);
+        color_b = atoi(args[2]);
+        
+        //setColor(color_r, color_g, color_b);
     }
 }
 
@@ -245,6 +252,8 @@ void setup() {
     pinMode(LED_BLUE_PIN, OUTPUT);
     
     // Stop
+    speed_l = 0;
+    speed_r = 0;
     setSpeed(0, 0);
     
     // Initialize state
@@ -253,7 +262,7 @@ void setup() {
 
 void loop() {
     // Check battery
-    //battery_check();
+    battery_check();
     
     // Read sensors
     sharp_front = analogReadMedian(SHARP_FRONT_PIN, SHARP_SAMPLES);
@@ -264,9 +273,13 @@ void loop() {
     command_read();
     
     // Set speed
-    //setSpeed(speed_l, speed_r);
+    setSpeed(speed_l, speed_r);
     
-    //debug();
+    // Set color
+    setColor(color_r, color_g, color_b);
+    
+    // Send state
+    //state_send();
     
     //delay(10);
 }
