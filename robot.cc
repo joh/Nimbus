@@ -185,14 +185,26 @@ void command_parse()
         Serial.println(args[i]);
     }
     */
+    if (strcasecmp(cmd, "STOP") == 0) {
+        setSpeed(0, 0);
+    }
+    
     if (strcasecmp(cmd, "SPEED") == 0) {
         if (n_args < 2) {
             Serial.println("Usage: SPEED L R");
             return;
         }
         
-        speed_l = atoi(args[0]);
-        speed_r = atoi(args[1]);
+        setSpeed(atoi(args[0]), atoi(args[1]));
+    }
+    
+    if (strcasecmp(cmd, "COLOR") == 0) {
+        if (n_args < 3) {
+            Serial.println("Usage: COLOR R G B");
+            return;
+        }
+        
+        setColor(atoi(args[0]), atoi(args[1]), atoi(args[2]));
     }
 }
 
@@ -232,10 +244,7 @@ void setup() {
     pinMode(LED_GREEN_PIN, OUTPUT);
     pinMode(LED_BLUE_PIN, OUTPUT);
     
-    // Set speeds
-    speed_l = 0;
-    speed_r = 0;
-    
+    // Stop
     setSpeed(0, 0);
     
     // Initialize state
@@ -255,10 +264,10 @@ void loop() {
     command_read();
     
     // Set speed
-    setSpeed(speed_l, speed_r);
+    //setSpeed(speed_l, speed_r);
     
     //debug();
     
-    delay(10);
+    //delay(10);
 }
 
