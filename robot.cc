@@ -35,6 +35,9 @@ int color_r, color_g, color_b;
 // Sensor readings
 int sharp_front, sharp_left, sharp_right;
 
+// Timing for state sends
+unsigned long state_send_time = 0;
+
 // Last dominant reading
 Side sharp_last = NONE;
 
@@ -279,7 +282,10 @@ void loop() {
     setColor(color_r, color_g, color_b);
     
     // Send state
-    //state_send();
+    if (millis() - state_send_time >= 100) {
+        state_send_time = millis();
+        state_send();
+    }
     
     //delay(10);
 }
